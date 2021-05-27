@@ -12,7 +12,6 @@ const { logger } = require("./utils/logger");
 // these 2 modules will be used for the command handler
 const { join } = require("path");
 const { readdirSync, lstatSync } = require("fs");
-const { loggers } = require("winston");
 
 const token = process.env.DISCORD_TOKEN; // Grab the discord token
 
