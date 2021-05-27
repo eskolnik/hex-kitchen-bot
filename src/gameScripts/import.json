@@ -1,0 +1,80 @@
+{
+    "characters": {
+        "Host": {
+            "username": "Host",
+            "avatarURL": "https://cdn.shrm.org/image/upload/c_crop,h_1174,w_881,x_101,y_0/c_fit,f_auto,q_auto,w_767/v1/News/iStock-857155924_kvhucc"
+        },
+        "Slimer": {
+            "username": "Slimer",
+            "avatarURL": "https://static.wikia.nocookie.net/antagonists/images/2/2f/Slimer.jpg/revision/latest?cb=20120919160003"
+        }
+    },
+    "channels": [
+        { "name": "entryway", "type": "Text", "category": "Ground Floor" },
+        { "name": "kitchen", "type": "Text", "category": "Ground Floor" }
+    ],
+    "categoryChannels": [{ "name": "Ground Floor" }],
+    "initialEvent": "0",
+    "events": [
+        { "id": 1, "type": "RoomUnlockEvent", "channel": "entryway" },
+        {
+            "id": 2,
+            "type": "GameMessageEvent",
+            "channel": "entryway",
+            "character": "Host",
+            "content": "Welcome to Hex Kitchen. Your assignment is to rid the house of the poltergeists"
+        },
+        {
+            "id": 3,
+            "type": "GameMessageEvent",
+            "channel": "entryway",
+            "character": "Host",
+            "content": "Look, a door! Open the door by clicking the :door: button below."
+        },
+        {
+            "id": 4,
+            "type": "EmojiReactEvent",
+            "channel": "entryway",
+            "emoji": "🚪",
+            "options": "{max: 1, autoRemove: true}",
+            "eventsTriggered": "5, 6, 7, 8, 9"
+        },
+        { "id": 5, "type": "RoomUnlockEvent", "channel": "kitchen" },
+        {
+            "id": 6,
+            "type": "GameMessageEvent",
+            "channel": "kitchen",
+            "character": "Host",
+            "content": "The kitchen is strewn with broken dishes, the sink is overflowing, and oh no! A slimey slimer poltergeist!"
+        },
+        {
+            "id": 7,
+            "type": "GameMessageEvent",
+            "channel": "kitchen",
+            "character": "Slimer",
+            "content": "Waaaaaaaaaash the dishes. "
+        },
+        {
+            "id": 8,
+            "type": "GameMessageEvent",
+            "channel": "kitchen",
+            "character": "Slimer",
+            "content": "What do you use to wash dishes? You can attempt to solve this puzzle using the `!solve ` command."
+        },
+        {
+            "id": 9,
+            "type": "Command",
+            "channel": "kitchen",
+            "eventsTriggered": 10,
+            "command": "solve",
+            "solution": "soap"
+        },
+        {
+            "id": 10,
+            "type": "GameMessageEvent",
+            "channel": "kitchen",
+            "character": "Host",
+            "content": "Hooray! You've cleaned up the kitchen and pacified the poltergeist! You won!"
+        }
+    ]
+}

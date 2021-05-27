@@ -1,0 +1,117 @@
+{
+    "characters": {
+        "host": {
+            "username": "Host",
+            "avatarURL": "https://static.wikia.nocookie.net/scrooge-mcduck/images/c/cd/White_Background_Ghost_Host.png/revision/latest/scale-to-width-down/310?cb=20190527200042"
+        },
+
+        "slimer": {
+            "username": "Slimer", 
+            "avatarURL": "https://static.wikia.nocookie.net/antagonists/images/2/2f/Slimer.jpg/revision/latest?cb=20120919160003"
+        }},
+    "categoryChannels": ["Ground Floor"],
+    "channels": [
+        {
+            "name": "entryway",
+            "type": "text",
+            "category": "Ground Floor"
+        },
+        {
+            "name": "kitchen",
+            "type": "text",
+            "category": "Ground Floor"
+        }
+    ],
+    "initialEvent": "GameStartSequence",
+    "events": [
+        {
+            "id": "GameStartSequence",
+            "type": "LinearSequence",
+            "events": ["0", "1", "2", "KitchenDoorButton"]
+        },
+        {
+            "id": "0",
+            "type": "ChannelUnlockEvent",
+            "channel": "entryway"
+        },
+        {
+            "id": "1",
+            "type": "GameMessageEvent",
+            "channel": "entryway",
+            "character": "host",
+            "content": "Welcome to Hex Kitchen. Your assignment is to rid the house of the poltergeists."
+        },
+        {
+            "id": "2",
+            "type": "GameMessageEvent",
+            "channel": "entryway",
+            "character": "host",
+            "content": "Look, a door! Open the door by clicking the :door: button below."
+        },
+        {
+            "id": "KitchenDoorButton",
+            "type": "EmojiReactEvent",
+            "targetEventId": "2",
+            "emoji": "🚪",
+            "options": {
+                "max": 1,
+                "autoRemove": true
+            },
+            "triggers": "KitchenOpenSequence"
+        },
+
+        {
+            "id": "KitchenOpenSequence",
+            "type": "LinearSequence",
+            "events": ["3", "4", "5", "6", "7"]
+        },
+
+        {
+            "id": "3",
+            "type": "ChannelUnlockEvent",
+            "channel": "kitchen"
+        },
+
+        {
+            "id": "4",
+            "type": "GameMessageEvent",
+            "channel": "kitchen",
+            "character": "host",
+            "content": "The kitchen is strewn with broken dishes, the sink is overflowing, and oh no look a poltergeist."
+        },
+
+        {
+            "id": "5",
+            "type": "GameMessageEvent",
+            "channel": "kitchen",
+            "character": "slimer",
+            "content": "Waaaaaaaaaash the dishes."
+        },
+
+        {
+            "id": "6",
+            "type": "GameMessageEvent",
+            "channel": "kitchen",
+            "character": "slimer",
+            "content": "What do you use to wash dishes? You can attempt to solve this puzzle using the `!solve <solution>` command."
+        },
+
+        {
+            "id": "7",
+            "type": "PuzzleCommand",
+            "channel": "kitchen",
+            "command": "solve",
+            "solution": "soap", 
+            "triggers": "8"
+        },
+
+        {
+            "id": "8",
+            "type": "GameMessageEvent",
+            "channel": "kitchen",
+            "character": "host",
+            "content": "Hooray! You've cleaned up the kitchen and solved the case!"
+        }
+
+    ]
+}
