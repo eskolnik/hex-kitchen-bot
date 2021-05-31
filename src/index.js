@@ -1,6 +1,6 @@
 require("dotenv").config({
     path: `./.env.${
-        process.env.NODE_ENV?.match(/development|production/) || "default"
+        process.env.NODE_ENV?.match(/development|production|staging/) || "default"
     }`,
 });
 const { Client, Collection, Message } = require("discord.js"); // discord api wrapper, only requiring the Client and Collection class

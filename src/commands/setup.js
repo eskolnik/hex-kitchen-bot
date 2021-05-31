@@ -6,11 +6,11 @@ module.exports = {
         name: "setup", // command name
         aliases: [], // command aliases, if any
     },
-
+    name: "setup",
+    aliases: [],
+    usageFilter: (bot, message, args) => args.length <= 1,
+    usageHelp: "`!setup <version>`",
     run: async (bot, message, args) => {
-        // console.log(message.attachments);
-        // const file = message.attachments.first().attachment;
-
         const version = args.join(" ") || "v1";
         const scriptURL =
             "https://script.google.com/macros/s/AKfycbz5p9Tq5NqdCzzT3ZpBZBXqlRmxFrVnE4cd0Q_qRaVjDsnmTpVoaZTZ7uoDiJFnQgvgoA/exec?version=" +
@@ -19,11 +19,6 @@ module.exports = {
         const data = await fetch(scriptURL);
 
         const scriptJSON = await data.json();
-
-        console.log(scriptJSON);
-
-        // const filePath = join(__dirname, "../gameScripts/testScript.json");
-        // const scriptFile = fs.readFileSync(filePath);
 
         const script = await initiateScript(scriptJSON, bot, message.guild);
 
@@ -79,48 +74,5 @@ module.exports = {
                 console.error("Failed to remove reactions.");
             }
         });
-
-        // const CHANNEL_TYPE_TEXT = "text";
-        // const CHANNEL_TYPE_VOICE = "voice";
-        // const CHANNEL_TYPE_CATEGORY = "category";
-
-        // // Get channel manager
-        // const channels = message.guild.channels;
-
-        // // Create channel category
-        // const channelGroup = await channels.create("Test Category", {
-        //     type: CHANNEL_TYPE_CATEGORY,
-        // });
-
-        // // Create a Test channel
-        // const channelName = args.join("-") || "test-channel";
-        // const testChannel = await channels.create(channelName, {
-        //     type: CHANNEL_TYPE_TEXT,
-        //     topic: "A bespoke bot-generated channel",
-        //     parent: channelGroup,
-        // });
-
-        // // await database("Channels").insert({Name: channelName, Slug: channelName, ChannelType: 'text'});
-
-        // // Send teardown reaction
-        // const sentMessage = await message.channel.send(
-        //     `Created new channel ${testChannel}. Press :x: to delete it.`
-        // );
-        // await sentMessage.react("❌");
-
-        // // Destroy channel and category on react
-        // const filter = (reaction, user) => reaction.emoji.name === "❌";
-        // const collector = sentMessage.createReactionCollector(filter, {
-        //     max: 1,
-        // });
-        // collector.on("collect", async (reaction, user) => {
-        //     try {
-        //         await testChannel.delete();
-        //         await channelGroup.delete();
-        //         await reaction.remove();
-        //     } catch (error) {
-        //         console.error("Failed to remove reactions.");
-        //     }
-        // });
     },
 };
