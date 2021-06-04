@@ -1,9 +1,11 @@
 const { prefix } = require("../utils/config");
-// const { setup } =
+const { logger } = require("../utils/logger");
+const setup = require("./setup");
+const ping = require("./ping");
 
 // Given a message, determine if it is a command
 const isCommand = (message) => {
-    message.startsWith(prefix);
+    return message.content.startsWith(prefix);
 };
 
 /**
@@ -15,11 +17,7 @@ const isCommand = (message) => {
  * @param {Object} availableCommands
  * @returns {Object||null}
  */
-const matchCommand = (message, availableCommands) => {
-    // extract arguments and command keyword
-    const args = message.content.slice(prefix.length).trim().split(/ +/g);
-    const cmd = args.shift().toLowerCase();
-
+const matchCommand = (cmd, availableCommands) => {
     const command = availableCommands[cmd];
 
     return command || null;
@@ -30,9 +28,54 @@ const matchCommand = (message, availableCommands) => {
  *
  * @param {Snowflake} guildId
  */
-const getAvailableCommandsForGuild = (guildId) => {};
+const getAvailableCommandsForGuild = (guildId) => {
+    return { setup, ping };
+};
+
+const DEV_COMMANDS = {
+    setup,
+    ping,
+};
+
+/**
+ * Given a message that has the command prefix, execute the given command
+ * If the command is unavailable in the server, or is incorrectly invoked,
+ * send the appropriate error response to the channel.
+ *
+ * @param {Discord.Client} bot
+ * @param {String} message
+ */
+const handleCommand = (bot, message) => {
+    const args = message.content.slice(prefix.length).trim().split(/ +/g);
+    const cmd = args.shift().toLowerCase();
+
+    const guildId = message.guild.id;
+
+    let availableCommands = getAvailableCommandsForGuild(guildId);
+
+    if (process.env.NODE_ENV === "development") {
+        availableCommands = { ...availableCommands, ...DEV_COMMANDS };
+    }
+
+    const command = matchCommand(cmd, availableCommands);
+
+    if (!command) {
+        return;
+    }
+
+    if (command.usageFilter && !command.usageFilter(bot, message, args)) {
+        message.channel.send("Command usage: " + command.usageHelp);
+        logger.info("CommandInvoked-Incorrectly", { command: message.content });
+        return;
+    }
+
+    command.run(bot, message, args);
+    logger.info("CommandInvoked-Correctly", { command: message.content });
+};
 
 module.exports = {
     isCommand,
     matchCommand,
+    handleCommand,
+    getAvailableCommandsForGuild,
 };

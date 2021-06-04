@@ -12,11 +12,14 @@ module.exports = {
     usageHelp: "`!setup <version>`",
     run: async (bot, message, args) => {
         const version = args.join(" ") || "v1";
-        const scriptURL =
-            "https://script.google.com/macros/s/AKfycbz5p9Tq5NqdCzzT3ZpBZBXqlRmxFrVnE4cd0Q_qRaVjDsnmTpVoaZTZ7uoDiJFnQgvgoA/exec?version=" +
-            version;
-
-        const data = await fetch(scriptURL);
+        const scriptURL = process.env.SCRIPT_TOOL_URL + "?version=" + version;
+        let data;
+        try {
+            data = await fetch(scriptURL);
+        } catch (error) {
+            console.log("Unable to fetch script. ", error);
+            return;
+        }
 
         const scriptJSON = await data.json();
 
