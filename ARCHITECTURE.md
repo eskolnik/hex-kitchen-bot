@@ -4,8 +4,10 @@ This doc describes the high level architecture of the Hex Kitchen Bot applicatio
 
 ## Bird's Eye View
 
-This bot handles all chat commands and game events for the Hex Kitchen game.
-The bot can initialize a game from a JSON script file
+This bot handles all chat commands and game events for the Hex Kitchen game. It includes script-parsing logic so that we can load and run specific version of the game script without significantly impacting older versions.
+
+The primary interface for the bot consists of handlers for event types emitted by the Discord.js Client.
+It does not make extensive use of Discord.js Collectors. Instead, we will handle each event in isolation via the same code path.
 
 ## Game State
 
