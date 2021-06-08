@@ -9,6 +9,7 @@ const { Client, Collection, Message } = require("discord.js"); // discord api wr
 const chalk = require("chalk"); // chalk is a module that adds color to our console logs
 const moment = require("moment"); // moment will allow us to format specific dates and times later
 const { logger } = require("./utils/logger");
+const discordButtons = require("discord-buttons");
 
 const commandRoot = require("./commands/commandRoot");
 
@@ -18,6 +19,7 @@ const commandRoot = require("./commands/commandRoot");
 const main = () => {
     // Instantiate bot
     const bot = new Client();
+    discordButtons(bot);
 
     // Message handler
     bot.on("message", (message) => messageHandler(bot, message));
@@ -26,6 +28,8 @@ const main = () => {
     bot.on("messageReactionAdd", (reaction, user) =>
         emojiReactionHandler(bot, reaction, user)
     );
+
+    bot.on("clickButton", (button) => buttonClickHandler(bot, button));
 
     // Handle errors and warnings
     bot.on("error", console.error); // if theres an error, console log it
@@ -48,6 +52,8 @@ const main = () => {
 };
 
 /**
+ * Handle messages from users
+ *
  * Load script for that message's game
  * Check if message is a valid command for that game
  * Check if message is a valid promptResponse for that game
@@ -61,11 +67,23 @@ const messageHandler = (bot, message) => {
 };
 
 /**
+ * Handle a user emoji-reacting to a message
+ *
  * Load script for that emoji's message's game
  * Check if the emoji's message is a valid/active game object
  *
  *
  */
 const emojiReactionHandler = (bot, messageReaction, user) => {};
+
+/**
+ * Handle a user clicking a button
+ *
+ * @param {*} bot
+ * @param {*} button
+ */
+const buttonClickHandler = (bot, button) => {
+    console.log("button clicked", button.id);
+};
 
 main();

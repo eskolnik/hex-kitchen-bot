@@ -9,6 +9,7 @@ const EVENT_TYPE = [
     "LinearSequence",
     "ChannelUnlockEvent",
     "PuzzleCommand",
+    "SpecialEvent",
 ];
 
 const EVENT_STATUS = {

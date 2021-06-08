@@ -1,7 +1,6 @@
 const { prefix } = require("../utils/config");
 const { logger } = require("../utils/logger");
-const setup = require("./setup");
-const ping = require("./ping");
+const DEV_COMMANDS = require("./dev");
 
 // Given a message, determine if it is a command
 const isCommand = (message) => {
@@ -18,7 +17,7 @@ const isCommand = (message) => {
  * @returns {Object||null}
  */
 const matchCommand = (cmd, availableCommands) => {
-    const command = availableCommands[cmd];
+    const command = availableCommands.find((c) => c.name === cmd);
 
     return command || null;
 };
@@ -29,12 +28,7 @@ const matchCommand = (cmd, availableCommands) => {
  * @param {Snowflake} guildId
  */
 const getAvailableCommandsForGuild = (guildId) => {
-    return { setup, ping };
-};
-
-const DEV_COMMANDS = {
-    setup,
-    ping,
+    return [];
 };
 
 /**
@@ -54,7 +48,7 @@ const handleCommand = (bot, message) => {
     let availableCommands = getAvailableCommandsForGuild(guildId);
 
     if (process.env.NODE_ENV === "development") {
-        availableCommands = { ...availableCommands, ...DEV_COMMANDS };
+        availableCommands = [...availableCommands, ...DEV_COMMANDS];
     }
 
     const command = matchCommand(cmd, availableCommands);

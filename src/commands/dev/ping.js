@@ -1,3 +1,6 @@
+/**
+ * Basic ping
+ */
 module.exports = {
     name: "ping",
     aliases: [],

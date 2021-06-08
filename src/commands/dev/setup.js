@@ -1,4 +1,7 @@
-const { initiateScript } = require("../engine/initiateScript");
+/**
+ * Set up a script from the Script Tool
+ */
+const { initiateScript } = require("../../engine/initiateScript");
 const fetch = require("node-fetch");
 
 module.exports = {
