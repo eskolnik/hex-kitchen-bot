@@ -19,6 +19,8 @@ const commandRoot = require("./commands/commandRoot");
 const main = () => {
     // Instantiate bot
     const bot = new Client();
+
+    // set up discord button extension
     discordButtons(bot);
 
     // Message handler
@@ -29,7 +31,17 @@ const main = () => {
         emojiReactionHandler(bot, reaction, user)
     );
 
+    // Discord Button handler
     bot.on("clickButton", (button) => buttonClickHandler(bot, button));
+
+    // Handle joining a new server
+    bot.on("guildCreate", (guild) => {
+        let channel = guild.systemChannel || guild.channels.cache.first;
+
+        channel.send(
+            "Welcome to the Hex Kitchen server!. Use `!setup <version>` to initiate a script."
+        );
+    });
 
     // Handle errors and warnings
     bot.on("error", console.error); // if theres an error, console log it
@@ -56,7 +68,7 @@ const main = () => {
  *
  * Load script for that message's game
  * Check if message is a valid command for that game
- * Check if message is a valid promptResponse for that game
+ * Check if message is an expected response for that game
  */
 const messageHandler = (bot, message) => {
     if (message.author.bot) return; // if the message author is a bot, ignore

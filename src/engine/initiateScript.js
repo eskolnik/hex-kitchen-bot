@@ -1,9 +1,9 @@
 const { parseScript } = require("./parseScript");
 const { handleEvent } = require("./handleEvent");
 
-const initiateScript = async (scriptFile, bot, guild) => {
-    // Parse script file
-    const gameScript = await parseScript(scriptFile);
+const initiateScript = (scriptJSON, bot, guild) => {
+    // Parse script json
+    const gameScript = parseScript(scriptJSON);
 
     // Assign guild to script
     gameScript.guild = guild;

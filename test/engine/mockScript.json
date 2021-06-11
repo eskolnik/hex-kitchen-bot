@@ -1,117 +1,111 @@
 {
     "characters": {
-        "host": {
+        "Host": {
             "username": "Host",
-            "avatarURL": "https://static.wikia.nocookie.net/scrooge-mcduck/images/c/cd/White_Background_Ghost_Host.png/revision/latest/scale-to-width-down/310?cb=20190527200042"
+            "avatarURL": "https://cdn.shrm.org/image/upload/c_crop,h_1174,w_881,x_101,y_0/c_fit,f_auto,q_auto,w_767/v1/News/iStock-857155924_kvhucc"
         },
-
-        "slimer": {
-            "username": "Slimer", 
+        "Slimer": {
+            "username": "Slimer",
             "avatarURL": "https://static.wikia.nocookie.net/antagonists/images/2/2f/Slimer.jpg/revision/latest?cb=20120919160003"
-        }},
-    "categoryChannels": ["Ground Floor"],
-    "channels": [
-        {
-            "name": "entryway",
-            "type": "text",
-            "category": "Ground Floor"
-        },
-        {
-            "name": "kitchen",
-            "type": "text",
-            "category": "Ground Floor"
         }
+    },
+    "channels": [
+        { "name": "entryway", "type": "text", "category": "Ground Floor" },
+        { "name": "kitchen", "type": "text", "category": "Ground Floor" },
+        { "name": "dining-room", "type": "text", "category": "Basement" },
+        { "name": "Dining Room", "type": "voice", "category": "Basement" }
     ],
-    "initialEvent": "GameStartSequence",
+    "categoryChannels": [{ "name": "Ground Floor" }, { "name": "Basement" }],
+    "initialEvent": "1",
     "events": [
         {
-            "id": "GameStartSequence",
+            "id": 1,
             "type": "LinearSequence",
-            "events": ["0", "1", "2", "KitchenDoorButton"]
+            "eventsTriggered": ["2", "3", "4", "5"]
         },
+        { "id": 2, "type": "ChannelUnlock", "channel": "entryway" },
         {
-            "id": "0",
-            "type": "ChannelUnlockEvent",
-            "channel": "entryway"
-        },
-        {
-            "id": "1",
-            "type": "GameMessageEvent",
+            "id": 3,
+            "type": "GameMessage",
             "channel": "entryway",
-            "character": "host",
-            "content": "Welcome to Hex Kitchen. Your assignment is to rid the house of the poltergeists."
+            "character": "Host",
+            "content": "Welcome to Hex Kitchen. Your assignment is to rid the house of the poltergeists"
         },
         {
-            "id": "2",
-            "type": "GameMessageEvent",
+            "id": 4,
+            "type": "GameMessage",
             "channel": "entryway",
-            "character": "host",
+            "character": "Host",
             "content": "Look, a door! Open the door by clicking the :door: button below."
         },
         {
-            "id": "KitchenDoorButton",
-            "type": "EmojiReactEvent",
-            "targetEventId": "2",
-            "emoji": "🚪",
-            "options": {
-                "max": 1,
-                "autoRemove": true
-            },
-            "triggers": "KitchenOpenSequence"
+            "id": 5,
+            "type": "EmojiReact",
+            "content": "🚪",
+            "targetEvent": 4,
+            "options": { "max": 1, "autoRemove": true },
+            "eventsTriggered": ["6", "7", "8", "9", "10"]
         },
-
+        { "id": 6, "type": "ChannelUnlock", "channel": "kitchen" },
         {
-            "id": "KitchenOpenSequence",
-            "type": "LinearSequence",
-            "events": ["3", "4", "5", "6", "7"]
-        },
-
-        {
-            "id": "3",
-            "type": "ChannelUnlockEvent",
-            "channel": "kitchen"
-        },
-
-        {
-            "id": "4",
-            "type": "GameMessageEvent",
+            "id": 7,
+            "type": "GameMessage",
             "channel": "kitchen",
-            "character": "host",
-            "content": "The kitchen is strewn with broken dishes, the sink is overflowing, and oh no look a poltergeist."
+            "character": "Host",
+            "content": "The kitchen is strewn with broken dishes, the sink is overflowing, and oh no! A slimey slimer poltergeist!"
         },
-
         {
-            "id": "5",
-            "type": "GameMessageEvent",
+            "id": 8,
+            "type": "GameMessage",
             "channel": "kitchen",
-            "character": "slimer",
-            "content": "Waaaaaaaaaash the dishes."
+            "character": "Slimer",
+            "content": "Waaaaaaaaaash the dishes. "
         },
-
         {
-            "id": "6",
-            "type": "GameMessageEvent",
+            "id": 9,
+            "type": "GameMessage",
             "channel": "kitchen",
-            "character": "slimer",
-            "content": "What do you use to wash dishes? You can attempt to solve this puzzle using the `!solve <solution>` command."
+            "character": "Slimer",
+            "content": "What do you use to wash dishes? You can attempt to solve this puzzle using the `!solve ` command."
         },
-
         {
-            "id": "7",
-            "type": "PuzzleCommand",
+            "id": 10,
+            "type": "Command",
             "channel": "kitchen",
+            "eventsTriggered": ["11", "12", "13", "14", "15"],
             "command": "solve",
-            "solution": "soap", 
-            "triggers": "8"
+            "solution": "soap"
         },
-
         {
-            "id": "8",
-            "type": "GameMessageEvent",
+            "id": 11,
+            "type": "GameMessage",
             "channel": "kitchen",
-            "character": "host",
-            "content": "Hooray! You've cleaned up the kitchen and solved the case!"
+            "character": "Host",
+            "content": "Ok, now head over to the dining room."
+        },
+        { "id": 12, "type": "ChannelUnlock", "channel": "dining-room" },
+        { "id": 13, "type": "ChannelUnlock", "channel": "Dining Room" },
+        {
+            "id": 14,
+            "type": "GameMessage",
+            "channel": "dining-room",
+            "character": "Slimer",
+            "content": "Heck right off."
+        },
+        {
+            "id": 15,
+            "type": "EmojiReact",
+            "content": "👍",
+            "targetEvent": 14,
+            "options": { "max": 1, "autoRemove": true },
+            "eventsTriggered": ["16"]
+        },
+        {
+            "id": 16,
+            "type": "GameMessage",
+            "channel": "dining-room",
+            "character": "Host",
+            "content": "You won!"
         }
-
     ]
 }

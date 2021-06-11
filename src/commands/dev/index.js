@@ -1,3 +1,5 @@
+// Exposes all DEV-only commands
+
 const ping = require("./ping");
 const setup = require("./setup");
 const button = require("./button");

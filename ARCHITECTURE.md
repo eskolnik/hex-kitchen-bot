@@ -11,6 +11,9 @@ It does not make extensive use of Discord.js Collectors. Instead, we will handle
 
 ## Game State
 
+Game state will be managed in-memory until we get much closer to production.
+For the sake of debugging during a playtest, it would likely be best to have a save-file format that we can write to and hydrate from.
+
 ### Game
 
 Global Challenge completion (Puzzles, cooking challenges)
@@ -24,10 +27,10 @@ Server id
 Admin users on server
 Channel IDs join table for channels on server
 
-## Code Map
+# Code Map
 
-### db
+## db
 
-### src
+## src
 
-#### models
+### models

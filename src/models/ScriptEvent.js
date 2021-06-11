@@ -1,22 +1,52 @@
+// Script Event model
+
 const { APIMessage } = require("discord.js");
 const { getWebhookForChannel } = require("../webhooks/webhook");
 const { createChannel } = require("./createChannel");
 
-const EVENT_TYPE = [
-    "GameMessage",
-    "EmojiReact",
-    "Command",
-    "LinearSequence",
-    "ChannelUnlock",
-    "PuzzleCommand",
-    "Special",
-];
+const EVENT_TYPE = {
+    GAME_MESSAGE: "GameMessage",
+    EMOJI_REACT: "EmojiReact",
+    COMMAND: "Command",
+    LINEAR_SEQUENCE: "LinearSequence",
+    CHANNEL_UNLOCK: "ChannelUnlock",
+    PUZZLE_COMMAND: "PuzzleCommand",
+    SPECIAL: "Special",
+};
 
 const EVENT_STATUS = {
     UNAVAILABLE: "unavailable",
     IN_PROGRESS: "in_progress",
     COMPLETE: "complete",
 };
+
+class ScriptEvent {
+    constructor({ type, id, currentStatus = EVENT_STATUS.UNAVAILABLE }) {
+        if (!Object.values(EVENT_TYPE).includes(type)) {
+            throw new Error("Undefined Event Type");
+        }
+
+        this.type = type;
+        this.id = id;
+        this.currentStatus = currentStatus;
+    }
+}
+
+class GameMessageEvent extends ScriptEvent {
+    constructor({
+        id,
+        channel,
+        character,
+        content,
+        currentStatus = EVENT_STATUS.UNAVAILABLE,
+    }) {
+        super({ type: EVENT_TYPE.GAME_MESSAGE, id, currentStatus });
+
+        this.channel = channel;
+        this.character = character;
+        this.content = content;
+    }
+}
 
 const getScriptChannel = (script, channelName) =>
     script.channels.find((c) => c.name === channelName);
