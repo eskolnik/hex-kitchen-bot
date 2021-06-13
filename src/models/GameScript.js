@@ -27,11 +27,20 @@ class GameScript {
     }
 
     getChannel(channelName) {
-        this.channels.find((channel) => channel.name === channelName);
+        return this.channels.find((channel) => channel.name === channelName);
     }
 
     getCategoryChannel(channelName) {
-        this.categoryChannels.find((channel) => channel.name === channelName);
+        return this.categoryChannels.find(
+            (channel) => channel.name === channelName
+        );
+    }
+
+    getEventById(eventId) {
+        if (this.events[eventId]) {
+            return this.events[eventId];
+        }
+        return null;
     }
 
     static fromJson(guildId, jsonString, guild) {

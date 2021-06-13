@@ -1,12 +1,14 @@
 // Script Event model
+// A Script Event is an action the bot takes, or an action the bot is awaiting from a player
 
-const { APIMessage } = require("discord.js");
 const { getWebhookForChannel } = require("../webhooks/webhook");
 const { createChannel } = require("./createChannel");
 
 const EVENT_TYPE = {
     GAME_MESSAGE: "GameMessage",
+    UPDATE_GAME_MESSAGE: "UpdateGameMessage",
     EMOJI_REACT: "EmojiReact",
+    REMOVE_EMOJI_REACT: "RemoveEmojiReact",
     COMMAND: "Command",
     LINEAR_SEQUENCE: "LinearSequence",
     CHANNEL_UNLOCK: "ChannelUnlock",
@@ -30,8 +32,27 @@ class ScriptEvent {
         this.id = id;
         this.currentStatus = currentStatus;
     }
+
+    begin() {
+        if (!this.currentStatus === EVENT_STATUS.UNAVAILABLE) {
+            return false;
+        }
+        this.currentStatus = EVENT_STATUS.IN_PROGRESS;
+        return true;
+    }
+
+    end() {
+        if (!this.currentStatus === EVENT_STATUS.IN_PROGRESS) {
+            return false;
+        }
+        this.currentStatus = EVENT_STATUS.COMPLETE;
+        return true;
+    }
 }
 
+/**
+ * Sends a message to the server from an NPC
+ */
 class GameMessageEvent extends ScriptEvent {
     constructor({
         id,
@@ -39,19 +60,67 @@ class GameMessageEvent extends ScriptEvent {
         character,
         content,
         currentStatus = EVENT_STATUS.UNAVAILABLE,
+        message: messageId = null,
     }) {
         super({ type: EVENT_TYPE.GAME_MESSAGE, id, currentStatus });
 
         this.channel = channel;
         this.character = character;
         this.content = content;
+        this.message = messageId;
+    }
+    /**
+     * Record a message related to a script event
+     *
+     * @param {String} messageId
+     * @param {Event} event
+     * @param {Script} script
+     */
+    recordMessage(messageId) {
+        this.message = messageId;
+    }
+
+    getMessageId() {
+        return this.message;
     }
 }
 
-const getScriptChannel = (script, channelName) =>
-    script.channels.find((c) => c.name === channelName);
+/**
+ * Reacts to a message with an emoji.
+ */
+class EmojiReactEvent extends ScriptEvent {
+    constructor({
+        id,
+        content,
+        targetEventId,
+        currentStatus = EVENT_STATUS.UNAVAILABLE,
+    }) {
+        super({ type: EVENT_TYPE.EMOJI_REACT, id, currentStatus });
+        this.content = content;
+        this.targetEventId = targetEventId;
+    }
+}
 
-const getEventById = (script, eventId) => script.events[eventId];
+/**
+ * Creates a new Channel in the server.
+ */
+class ChannelUnlockEvent extends ScriptEvent {
+    constructor({ id, channel, currentStatus = EVENT_STATUS.UNAVAILABLE }) {
+        super({ type: EVENT_TYPE.CHANNEL_UNLOCK, id, currentStatus });
+    }
+}
+
+/**
+ * Triggers several other events in sequence
+ * TODO: add an option for a delay between events
+ */
+class LinearSequenceEvent extends ScriptEvent {}
+
+/**
+ * Make a command available in a channel
+ * TODO This style of commands probably needs rethinking?
+ */
+class CommandEvent extends ScriptEvent {}
 
 /**
  * Record a message related to a script event

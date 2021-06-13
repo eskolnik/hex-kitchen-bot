@@ -95,7 +95,7 @@ const handleEmojiReact = async (event, bot, script) => {
     if (event.status !== EVENT_STATUS.UNAVAILABLE) {
         return;
     }
-
+]
     // react to target message
     const targetEvent = getEventById(script, targetId);
 
