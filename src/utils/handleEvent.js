@@ -4,7 +4,6 @@ const { npcConfig } = require("../fakeDB/npcConfig");
 const { getWebhookForChannel } = require("../webhooks/webhook");
 const { logger } = require("../utils/logger");
 
-
 // events can be of several types, this util handles them all
 const EVENT_TYPES = {
     POST: "post", // post to a public channel
@@ -15,14 +14,14 @@ const EVENT_TYPES = {
 
 const handleEvents = async (events, bot, message, args) => {
     if (!events) return;
-    for (let i =0; i < events.length; i++) {
-        await handleEvent(events[i], bot, message, args)
+    for (let i = 0; i < events.length; i++) {
+        await handleEvent(events[i], bot, message, args);
     }
 };
 
 const handleEvent = async (event, bot, message, args) => {
     const { POST, DM, UNLOCK, ROLE } = EVENT_TYPES;
-    const {delay} = event;
+    const { delay } = event;
     switch (event.type) {
         case POST:
             await handlePostEvent(event, bot, message, args);
@@ -36,8 +35,8 @@ const handleEvent = async (event, bot, message, args) => {
         case ROLE:
             await handleRoleEvent(event, bot, message, args);
     }
-    if(event.delay) {
-        await setTimeout(() => {}, delay)
+    if (event.delay) {
+        await setTimeout(() => {}, delay);
     }
     return;
 };
@@ -49,11 +48,15 @@ const handlePostEvent = async (event, bot, message, args) => {
     const response = content || makeContent(message);
     const channel = await room.textChannel(bot);
 
-    if (npc && npcConfig.hasOwnProperty(npc)) {
+    if (npc && npcConfig.npc) {
         const webhook = await getWebhookForChannel(channel);
         const { name, url } = npcConfig[npc];
 
-        await webhook.send({embeds: [response], username: name, avatarURL: url });
+        await webhook.send({
+            embeds: [response],
+            username: name,
+            avatarURL: url,
+        });
         await webhook.delete();
         return;
     }
@@ -73,7 +76,7 @@ const handleUnlockEvent = async (event, bot, message, args) => {
     const { roomName, statusOverride } = event;
 
     const room = await Room.getByName(roomName);
-    logger.info("unlocking", {roomName})
+    logger.info("unlocking", { roomName });
     await room.updateState(bot, statusOverride || 0);
 };
 

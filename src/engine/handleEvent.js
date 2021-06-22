@@ -1,4 +1,5 @@
-const { APIMessage } = require("discord.js");
+const { APIMessage, Client } = require("discord.js");
+const { ScriptEvent } = require("../models/ScriptEvent");
 const { getWebhookForChannel } = require("../webhooks/webhook");
 const { createChannel } = require("./createChannel");
 
@@ -19,9 +20,9 @@ const EVENT_STATUS = {
 };
 
 const getScriptChannel = (script, channelName) =>
-    script.channels.find((c) => c.name === channelName);
+    script.getChannel(channelName);
 
-const getEventById = (script, eventId) => script.events[eventId];
+const getEventById = (script, eventId) => script.getEventById(eventId);
 
 /**
  * Record a message related to a script event
@@ -56,11 +57,18 @@ const sendMessage = async (channel, content, author, script) => {
     return sentMessage;
 };
 
+/**
+ *
+ * @param {ScriptEvent} event
+ * @param {Client} bot
+ * @param {GameScript} script
+ * @returns null
+ */
 const handleMessage = async (event, bot, script) => {
     const { channel, character, content } = event;
 
     // Do nothing if message has already been sent
-    if (event.status === EVENT_STATUS.COMPLETE) {
+    if (!event.begin()) {
         return;
     }
 
@@ -68,7 +76,7 @@ const handleMessage = async (event, bot, script) => {
 
     // Find the character name / avatar
     // const author = script.characters.find((c) => c.username === character);
-    const author = script.characters[character];
+    const author = script.getCharacter(character);
 
     const sentMessage = await sendMessage(
         scriptChannel,
@@ -80,7 +88,7 @@ const handleMessage = async (event, bot, script) => {
     // Store message on script
     recordMessage(sentMessage, event);
 
-    event.status = EVENT_STATUS.COMPLETE;
+    event.end();
 };
 
 const handleEmojiReact = async (event, bot, script) => {
@@ -95,7 +103,7 @@ const handleEmojiReact = async (event, bot, script) => {
     if (event.status !== EVENT_STATUS.UNAVAILABLE) {
         return;
     }
-]
+
     // react to target message
     const targetEvent = getEventById(script, targetId);
 

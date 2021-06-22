@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parseScript returns a set of game objects based on the input JSON 1`] = `
+Object {
+  "content": "🚪",
+  "eventsTriggered": Array [
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+  ],
+  "id": 5,
+  "messages": Array [],
+  "options": Object {
+    "autoRemove": true,
+    "max": 1,
+  },
+  "status": "unavailable",
+  "targetEvent": 4,
+  "type": "EmojiReact",
+}
+`;

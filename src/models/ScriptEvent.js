@@ -1,18 +1,15 @@
 // Script Event model
 // A Script Event is an action the bot takes, or an action the bot is awaiting from a player
 
-const { getWebhookForChannel } = require("../webhooks/webhook");
-const { createChannel } = require("./createChannel");
-
 const EVENT_TYPE = {
     GAME_MESSAGE: "GameMessage",
     UPDATE_GAME_MESSAGE: "UpdateGameMessage",
     EMOJI_REACT: "EmojiReact",
     REMOVE_EMOJI_REACT: "RemoveEmojiReact",
-    COMMAND: "Command",
+    EMOJI_INPUT: "EmojiInput",
+    COMMAND_INPUT: "Command",
     LINEAR_SEQUENCE: "LinearSequence",
     CHANNEL_UNLOCK: "ChannelUnlock",
-    PUZZLE_COMMAND: "PuzzleCommand",
     SPECIAL: "Special",
 };
 
@@ -23,14 +20,24 @@ const EVENT_STATUS = {
 };
 
 class ScriptEvent {
-    constructor({ type, id, currentStatus = EVENT_STATUS.UNAVAILABLE }) {
+    constructor({
+        type,
+        id,
+        guildId,
+        currentStatus = EVENT_STATUS.UNAVAILABLE,
+    }) {
         if (!Object.values(EVENT_TYPE).includes(type)) {
             throw new Error("Undefined Event Type");
         }
 
-        this.type = type;
         this.id = id;
+        this.type = type;
         this.currentStatus = currentStatus;
+        this.guildId = guildId;
+    }
+
+    isAvailable() {
+        return this.status === EVENT_STATUS.IN_PROGRESS;
     }
 
     begin() {
@@ -51,37 +58,25 @@ class ScriptEvent {
 }
 
 /**
- * Sends a message to the server from an NPC
+ * A message to the server from an NPC
+ *
  */
 class GameMessageEvent extends ScriptEvent {
     constructor({
         id,
+        guildId,
         channel,
         character,
         content,
         currentStatus = EVENT_STATUS.UNAVAILABLE,
-        message: messageId = null,
+        messageId = null,
     }) {
-        super({ type: EVENT_TYPE.GAME_MESSAGE, id, currentStatus });
+        super({ type: EVENT_TYPE.GAME_MESSAGE, id, currentStatus, guildId });
 
         this.channel = channel;
         this.character = character;
         this.content = content;
-        this.message = messageId;
-    }
-    /**
-     * Record a message related to a script event
-     *
-     * @param {String} messageId
-     * @param {Event} event
-     * @param {Script} script
-     */
-    recordMessage(messageId) {
-        this.message = messageId;
-    }
-
-    getMessageId() {
-        return this.message;
+        this.messageId = messageId;
     }
 }
 
@@ -91,12 +86,13 @@ class GameMessageEvent extends ScriptEvent {
 class EmojiReactEvent extends ScriptEvent {
     constructor({
         id,
-        content,
+        guildId,
+        emoji,
         targetEventId,
         currentStatus = EVENT_STATUS.UNAVAILABLE,
     }) {
-        super({ type: EVENT_TYPE.EMOJI_REACT, id, currentStatus });
-        this.content = content;
+        super({ type: EVENT_TYPE.EMOJI_REACT, id, currentStatus, guildId });
+        this.emoji = emoji;
         this.targetEventId = targetEventId;
     }
 }
@@ -105,8 +101,14 @@ class EmojiReactEvent extends ScriptEvent {
  * Creates a new Channel in the server.
  */
 class ChannelUnlockEvent extends ScriptEvent {
-    constructor({ id, channel, currentStatus = EVENT_STATUS.UNAVAILABLE }) {
-        super({ type: EVENT_TYPE.CHANNEL_UNLOCK, id, currentStatus });
+    constructor({
+        id,
+        guildId,
+        channel,
+        currentStatus = EVENT_STATUS.UNAVAILABLE,
+    }) {
+        super({ type: EVENT_TYPE.CHANNEL_UNLOCK, id, currentStatus, guildId });
+        this.channel = channel;
     }
 }
 
@@ -114,219 +116,80 @@ class ChannelUnlockEvent extends ScriptEvent {
  * Triggers several other events in sequence
  * TODO: add an option for a delay between events
  */
-class LinearSequenceEvent extends ScriptEvent {}
-
-/**
- * Make a command available in a channel
- * TODO This style of commands probably needs rethinking?
- */
-class CommandEvent extends ScriptEvent {}
-
-/**
- * Record a message related to a script event
- *
- * @param {Message} message
- * @param {Event} event
- * @param {Script} script
- */
-const recordMessage = (message, event) => {
-    event.messages.push(message.id);
-};
-
-const getEventMessageId = (event) => {
-    return event.messages && event.messages[0];
-};
-
-const sendMessage = async (channel, content, author, script) => {
-    if (channel.hook) {
-        const sentMessage = await channel.hook.send(content, author);
-        return sentMessage;
-    }
-
-    const gameChannel = await script.guild.channels.resolve(channel.channelId);
-
-    // Generate a webhook for the channel
-    const webhook = await getWebhookForChannel(gameChannel);
-
-    channel.hook = webhook;
-
-    const sentMessage = await webhook.send(content, author);
-
-    return sentMessage;
-};
-
-const handleMessage = async (event, bot, script) => {
-    const { channel, character, content } = event;
-
-    // Do nothing if message has already been sent
-    if (event.status === EVENT_STATUS.COMPLETE) {
-        return;
-    }
-
-    const scriptChannel = getScriptChannel(script, channel);
-
-    // Find the character name / avatar
-    // const author = script.characters.find((c) => c.username === character);
-    const author = script.characters[character];
-
-    const sentMessage = await sendMessage(
-        scriptChannel,
-        content,
-        author,
-        script
-    );
-
-    // Store message on script
-    recordMessage(sentMessage, event);
-
-    event.status = EVENT_STATUS.COMPLETE;
-};
-
-const handleEmojiReact = async (event, bot, script) => {
-    const {
-        targetEvent: targetId,
-        content: emoji,
-        options,
+class LinearSequenceEvent extends ScriptEvent {
+    constructor({
+        id,
+        guildId,
         eventsTriggered,
-    } = event;
+        currentStatus = EVENT_STATUS.UNAVAILABLE,
+    }) {
+        super({ type: EVENT_TYPE.LINEAR_SEQUENCE, id, guildId, currentStatus });
+        this.eventsTriggered = eventsTriggered;
+    }
+}
 
-    // If event has been started, short circuit
-    if (event.status !== EVENT_STATUS.UNAVAILABLE) {
-        return;
+/**
+ * Await a command in a specified channel
+ * TODO This style of commands probably needs rethinking? how do we even handle failure cases?
+ */
+class CommandInputEvent extends ScriptEvent {
+    constructor({
+        id,
+        guildId,
+        command,
+        solution,
+        currentStatus = EVENT_STATUS.UNAVAILABLE,
+    }) {
+        super({ type: EVENT_TYPE.COMMAND_INPUT, id, guildId, currentStatus });
+
+        this.command = command;
+        this.solution = solution;
+    }
+}
+
+/**
+ * Await a player's emoji reaction to a target message
+ *
+ */
+class EmojiInputEvent extends ScriptEvent {
+    constructor({ id, guildId, emoji, targetEventId, eventsTriggered }) {
+        super({ type: EVENT_TYPE.EMOJI_INPUT, id, guildId });
+
+        this.emoji = emoji;
+        this.targetEventId = targetEventId;
+        this.eventsTriggered = eventsTriggered;
+    }
+}
+
+class ScriptEventFactory {
+    constructor(guildId) {
+        this.guildId = guildId;
     }
 
-    // react to target message
-    const targetEvent = getEventById(script, targetId);
+    fromJson(json) {
+        const { type } = json;
+        let classMap = {
+            [EVENT_TYPE.GAME_MESSAGE]: GameMessageEvent,
+            [EVENT_TYPE.EMOJI_REACT]: EmojiReactEvent,
+            [EVENT_TYPE.EMOJI_INPUT]: EmojiInputEvent,
+            [EVENT_TYPE.COMMAND_INPUT]: CommandInputEvent,
+            [EVENT_TYPE.LINEAR_SEQUENCE]: LinearSequenceEvent,
+            [EVENT_TYPE.CHANNEL_UNLOCK]: ChannelUnlockEvent,
+        };
+        const EventClass = classMap[type];
 
-    // get target message
-    const targetMessageId = getEventMessageId(targetEvent);
-
-    const scriptChannel = getScriptChannel(script, targetEvent.channel);
-    const gameChannel = await bot.channels.fetch(scriptChannel.channelId);
-
-    const targetMessage = await gameChannel.messages.fetch(targetMessageId);
-    await targetMessage.react(emoji);
-
-    // set up trigger condition (if any)
-    if (eventsTriggered && eventsTriggered.length > 0) {
-        const filterOptions = {};
-        if (options.max) {
-            filterOptions.max = options.max;
-        }
-
-        const emojiReactionCollector = targetMessage.createReactionCollector(
-            (reaction, user) => reaction.emoji.name === emoji,
-            filterOptions
-        );
-
-        // on collect, trigger followup event
-        emojiReactionCollector.on("collect", async (reaction, user) => {
-            await handleLinearSequence(event, bot, script);
-
-            if (options.autoRemove) {
-                try {
-                    await reaction.users.remove(user.id);
-                } catch (err) {
-                    console.error("Failed to remove reactions");
-                }
-            }
-        });
-
-        // mark event as closed after collector completes
-        emojiReactionCollector.on("end", (collected) => {
-            event.status = EVENT_STATUS.COMPLETE;
-        });
+        return new EventClass({ guildId: this.guildId, ...json });
     }
-
-    event.status = EVENT_STATUS.IN_PROGRESS;
-};
-
-const handleChannelUnlock = async (event, bot, script) => {
-    const { channel } = event;
-
-    const scriptChannel = getScriptChannel(script, channel);
-
-    await createChannel(script, script.guild, scriptChannel);
-};
-
-const handleCommand = async (event, bot, script) => {
-    const { channel, command, solution } = event;
-
-    const scriptChannel = getScriptChannel(script, channel);
-
-    const gameChannel = await bot.channels.fetch(scriptChannel.channelId);
-
-    const collector = gameChannel.createMessageCollector(
-        (message) =>
-            message.content === `!${command}${solution ? " " + solution : ""}`
-    );
-
-    collector.on("collect", (message) => {
-        // Record the triggering message
-        recordMessage(message, event);
-
-        // trigger the associated events
-        handleLinearSequence(event, bot, script);
-    });
-};
-
-// const handlePuzzleCommand = async (event, bot, script) => {
-//     const { channel, command, solution, eventsTriggered } = event;
-//     const scriptChannel = getScriptChannel(script, channel);
-//     const gameChannel = await bot.channels.fetch(scriptChannel.channelId);
-//     const collector = gameChannel.createMessageCollector(
-//         (message) => message.content === `!${command} ${solution}`,
-//         { max: 1 }
-//     );
-//     collector.on("collect", (message) => {
-//         // Record the triggering message
-//         recordMessage(message, event);
-
-//         // trigger the associated events
-//         handleEvent(script.events[eventsTriggered], bot, script);
-//     });
-// };
-
-const handleLinearSequence = async (event, bot, script) => {
-    // Linear Sequence events contain a property "events" with an array of events to trigger in serial
-    const { eventsTriggered } = event;
-    for (let i = 0; i < eventsTriggered.length; i++) {
-        const nextEvent = script.events[eventsTriggered[i]];
-        if (nextEvent) {
-            await handleEvent(nextEvent, bot, script);
-        }
-    }
-};
-
-const handleEvent = async (event, bot, script) => {
-    // for Message events, send to the correct channel
-    // for Room unlocks, create the correct channel
-    // for Commands, set up the appropriate collector
-
-    switch (event.type) {
-        case "GameMessage":
-            await handleMessage(event, bot, script);
-            break;
-        case "EmojiReact":
-            await handleEmojiReact(event, bot, script);
-            break;
-        case "ChannelUnlock":
-            await handleChannelUnlock(event, bot, script);
-            break;
-        case "Command":
-            await handleCommand(event, bot, script);
-            break;
-        // case "PuzzleCommand":
-        //     await handlePuzzleCommand(event, bot, script);
-        //     break;
-        case "LinearSequence":
-            await handleLinearSequence(event, bot, script);
-            break;
-        default:
-            return;
-    }
-};
+}
 
 module.exports = {
-    handleEvent,
+    ScriptEvent,
+    GameMessageEvent,
+    EmojiReactEvent,
+    ChannelUnlockEvent,
+    LinearSequenceEvent,
+    CommandInputEvent,
+    ScriptEventFactory,
+    EVENT_STATUS,
+    EVENT_TYPE,
 };

@@ -46,7 +46,7 @@ function parseCategories(data) {
 
 /**
  *
- * @param {Array<object>} data An array of event object raw data
+ * @param {Array<Object>} data An array of event object raw data
  * @returns Event objects with status and message properties, keyed by ID
  */
 function parseEvents(data) {

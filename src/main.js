@@ -12,6 +12,8 @@ const { logger } = require("./utils/logger");
 const discordButtons = require("discord-buttons");
 
 const commandRoot = require("./commands/commandRoot");
+const cache = require("./db/cache");
+const { EVENT_TYPE } = require("./models/ScriptEvent");
 
 /**
  * Sets up bot listener
@@ -70,8 +72,10 @@ const main = () => {
  * Check if message is a valid command for that game
  * Check if message is an expected response for that game
  */
-const messageHandler = (bot, message) => {
+const messageHandler = async (bot, message) => {
     if (message.author.bot) return; // if the message author is a bot, ignore
+
+    // get the script for the current server
 
     if (commandRoot.isCommand(message)) {
         commandRoot.handleCommand(bot, message);
@@ -86,7 +90,26 @@ const messageHandler = (bot, message) => {
  *
  *
  */
-const emojiReactionHandler = (bot, messageReaction, user) => {};
+const emojiReactionHandler = async (bot, messageReaction, user) => {
+    // get the script
+    const gameScript = cache.getGameByGuildId(messageReaction.message.guild.id);
+
+    // Short circuit if no game script exists
+    if (!gameScript) {
+        return;
+    }
+
+    // get all script emoji events
+    const emojiEvents = gameScript.getEvents({
+        typeFilter: EVENT_TYPE.EMOJI_REACT,
+    });
+
+    // look for event that matches target message id
+    emojiEvents.forEach((event) => {
+        // get the target event message id
+        const target = event.target;
+    });
+};
 
 /**
  * Handle a user clicking a button
