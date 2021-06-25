@@ -1,0 +1,36 @@
+/**
+ * Basic ping
+ */
+module.exports = {
+    name: "metro",
+    aliases: [],
+    usageFilter: (bot, message, args) => args.length <= 0,
+    usageHelp: "`!metro`",
+    run: async (bot, message, args) => {
+        const channel = message.channel;
+        const cmdMessages = [message];
+        let count = 0;
+
+        let  clockMsg = await channel.send("CLOCK: " + count);
+        let updateClock = () => clockMsg.edit("CLOCK: " + count).catch(console.log);
+        cmdMessages.push(clockMsg);
+
+        const clock = setInterval(() => {
+            count += 5;
+            updateClock();
+        }, 5000);
+
+        await message.react("❌");
+
+        // Destroy channels on react
+        const filter = (reaction, user) => reaction.emoji.name === "❌";
+        const collector = message.createReactionCollector(filter);
+
+        collector.on("collect", async () => {
+            clearInterval(clock);
+            cmdMessages.forEach((m) => {
+                m?.delete().catch((err) => console.log(err));
+            });
+        });
+    },
+};
