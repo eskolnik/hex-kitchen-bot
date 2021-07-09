@@ -91,7 +91,7 @@ const messageHandler = async (bot, message) => {
  *
  */
 const emojiReactionHandler = async (bot, messageReaction, user) => {
-    // get the script
+    // get the script for this server
     const gameScript = cache.getGameByGuildId(messageReaction.message.guild.id);
 
     // Short circuit if no game script exists

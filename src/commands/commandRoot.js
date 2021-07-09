@@ -1,3 +1,4 @@
+const { Message, Client } = require("discord.js");
 const { prefix } = require("../utils/config");
 const { logger } = require("../utils/logger");
 const DEV_COMMANDS = require("./dev");
@@ -12,7 +13,7 @@ const isCommand = (message) => {
  * return the matching command
  * or null if no matching command is found.
  *
- * @param {Discord.message} message
+ * @param {Message} message
  * @param {Object} availableCommands
  * @returns {Object||null}
  */
@@ -36,7 +37,7 @@ const getAvailableCommandsForGuild = (guildId) => {
  * If the command is unavailable in the server, or is incorrectly invoked,
  * send the appropriate error response to the channel.
  *
- * @param {Discord.Client} bot
+ * @param {Client} bot
  * @param {String} message
  */
 const handleCommand = (bot, message) => {
