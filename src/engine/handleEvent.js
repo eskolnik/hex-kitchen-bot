@@ -1,23 +1,8 @@
 const { APIMessage, Client } = require("discord.js");
-const { ScriptEvent } = require("../models/ScriptEvent");
+const { ScriptEvent, EVENT_TYPE, EVENT_STATUS } = require("../models/ScriptEvent");
+const { logger } = require("../utils/logger");
 const { getWebhookForChannel } = require("../webhooks/webhook");
 const { createChannel } = require("./createChannel");
-
-const EVENT_TYPE = [
-    "GameMessage",
-    "EmojiReact",
-    "Command",
-    "LinearSequence",
-    "ChannelUnlock",
-    "PuzzleCommand",
-    "Special",
-];
-
-const EVENT_STATUS = {
-    UNAVAILABLE: "unavailable",
-    IN_PROGRESS: "in_progress",
-    COMPLETE: "complete",
-};
 
 const getScriptChannel = (script, channelName) =>
     script.getChannel(channelName);
@@ -32,11 +17,12 @@ const getEventById = (script, eventId) => script.getEventById(eventId);
  * @param {Script} script
  */
 const recordMessage = (message, event) => {
-    event.messages.push(message.id);
+    event.messageId = message.id;
+    // TODO: figure out if events can store multiple messages
 };
 
 const getEventMessageId = (event) => {
-    return event.messages && event.messages[0];
+    return event.messageId;
 };
 
 const sendMessage = async (channel, content, author, script) => {
@@ -66,7 +52,7 @@ const sendMessage = async (channel, content, author, script) => {
  */
 const handleMessage = async (event, bot, script) => {
     const { channel, character, content } = event;
-
+    logger.info(`HandleMessage: ${channel}, ${character}, ${content}`);
     // Do nothing if message has already been sent
     if (!event.begin()) {
         return;
@@ -75,7 +61,6 @@ const handleMessage = async (event, bot, script) => {
     const scriptChannel = getScriptChannel(script, channel);
 
     // Find the character name / avatar
-    // const author = script.characters.find((c) => c.username === character);
     const author = script.getCharacter(character);
 
     const sentMessage = await sendMessage(
@@ -93,22 +78,23 @@ const handleMessage = async (event, bot, script) => {
 
 const handleEmojiReact = async (event, bot, script) => {
     const {
-        targetEvent: targetId,
-        content: emoji,
+        targetEventId,
+        emoji,
         options,
         eventsTriggered,
     } = event;
-
+    
+    logger.info(`HandleEmoji: ${targetEventId}, ${emoji}, ${eventsTriggered}`);
     // If event has been started, short circuit
-    if (event.status !== EVENT_STATUS.UNAVAILABLE) {
+    if (event.currentStatus !== EVENT_STATUS.UNAVAILABLE) {
         return;
     }
 
     // react to target message
-    const targetEvent = getEventById(script, targetId);
+    const targetEvent = getEventById(script, targetEventId.toString());
 
     // get target message
-    const targetMessageId = getEventMessageId(targetEvent);
+    const targetMessageId = targetEvent.messageId;
 
     const scriptChannel = getScriptChannel(script, targetEvent.channel);
     const gameChannel = await bot.channels.fetch(scriptChannel.channelId);
@@ -124,19 +110,22 @@ const handleEmojiReact = async (event, bot, script) => {
         }
 
         const emojiReactionCollector = targetMessage.createReactionCollector(
-            (reaction, user) => reaction.emoji.name === emoji,
+            (reaction, user) => {
+                return reaction.emoji.name === emoji;
+            },
             filterOptions
         );
 
         // on collect, trigger followup event
         emojiReactionCollector.on("collect", async (reaction, user) => {
+            logger.info(`Emoji reaction triggered: ${event.id} ${event.emoji}`);
             await handleLinearSequence(event, bot, script);
 
             if (options.autoRemove) {
                 try {
                     await reaction.users.remove(user.id);
                 } catch (err) {
-                    console.error("Failed to remove reactions");
+                    logger.error("Failed to remove reactions");
                 }
             }
         });
@@ -147,7 +136,58 @@ const handleEmojiReact = async (event, bot, script) => {
         });
     }
 
-    event.status = EVENT_STATUS.IN_PROGRESS;
+    event.begin();
+};
+
+const handleEmojiInput = async (event, bot, script) => {
+    // react to target message
+    const targetEvent = getEventById(script, event.targetEventId.toString());
+
+    // get target message
+    // const targetMessageId = getEventMessageId(targetEvent);
+    const targetMessageId = targetEvent.messageId;
+
+    const scriptChannel = getScriptChannel(script, targetEvent.channel);
+    const gameChannel = await bot.channels.fetch(scriptChannel.channelId);
+
+    const targetMessage = await gameChannel.messages.fetch(targetMessageId);
+    await targetMessage.react(event.emoji);
+
+    // set up trigger condition (if any)
+    if (event.eventsTriggered && event.eventsTriggered.length > 0) {
+        const filterOptions = {};
+        if (event.options?.max) {
+            filterOptions.max = event.options.max;
+        }
+
+        const emojiReactionCollector = targetMessage.createReactionCollector(
+            (reaction, user) => {
+                return reaction.emoji.name === event.emoji;
+            },
+            filterOptions
+        );
+
+        // on collect, trigger followup event
+        emojiReactionCollector.on("collect", async (reaction, user) => {
+            logger.info(`Emoji reaction triggered: ${event.id} ${event.emoji}`);
+            await handleLinearSequence(event, bot, script);
+
+            if (event.options?.autoRemove) {
+                try {
+                    await reaction.users.remove(user.id);
+                } catch (err) {
+                    console.error("Failed to remove reactions");
+                }
+            }
+        });
+
+        // mark event as closed after collector completes
+        emojiReactionCollector.on("end", (collected) => {
+            event.end();
+        });
+    }
+
+    event.begin();
 };
 
 const handleChannelUnlock = async (event, bot, script) => {
@@ -197,10 +237,23 @@ const handleCommand = async (event, bot, script) => {
 // };
 
 const handleLinearSequence = async (event, bot, script) => {
-    // Linear Sequence events contain a property "events" with an array of events to trigger in serial
+    // Linear Sequence events contain a property "eventsTriggered" with an array of events to trigger in serial
+
+    if(!event?.eventsTriggered) {
+        logger.warn("Empty LinearSequence: ", event);
+        return;
+    } 
+
     const { eventsTriggered } = event;
+
+    logger.info(`HandleLinearSequence: ${eventsTriggered}`);
+
     for (let i = 0; i < eventsTriggered.length; i++) {
-        const nextEvent = script.events[eventsTriggered[i]];
+        if(typeof eventsTriggered[i] !== "string") {
+            logger.warn("Event key wasn't a string:", eventsTriggered, i);
+        }
+        let stringKey = eventsTriggered[i].toString();
+        const nextEvent = script.events.get(stringKey);
         if (nextEvent) {
             await handleEvent(nextEvent, bot, script);
         }
@@ -211,28 +264,35 @@ const handleEvent = async (event, bot, script) => {
     // for Message events, send to the correct channel
     // for Room unlocks, create the correct channel
     // for Commands, set up the appropriate collector
+    try {
 
-    switch (event.type) {
-        case "GameMessage":
-            await handleMessage(event, bot, script);
-            break;
-        case "EmojiReact":
-            await handleEmojiReact(event, bot, script);
-            break;
-        case "ChannelUnlock":
-            await handleChannelUnlock(event, bot, script);
-            break;
-        case "Command":
-            await handleCommand(event, bot, script);
-            break;
-        // case "PuzzleCommand":
-        //     await handlePuzzleCommand(event, bot, script);
-        //     break;
-        case "LinearSequence":
-            await handleLinearSequence(event, bot, script);
-            break;
-        default:
-            return;
+        switch (event.type) {
+            case EVENT_TYPE.GAME_MESSAGE:
+                await handleMessage(event, bot, script);
+                break;
+            case EVENT_TYPE.EMOJI_REACT:
+                await handleEmojiReact(event, bot, script);
+                break;
+            case EVENT_TYPE.EMOJI_INPUT:
+                await handleEmojiInput(event, bot, script);
+                break;
+            case EVENT_TYPE.CHANNEL_UNLOCK:
+                await handleChannelUnlock(event, bot, script);
+                break;
+            case EVENT_TYPE.COMMAND_INPUT:
+                await handleCommand(event, bot, script);
+                break;
+                // case "PuzzleCommand":
+                //     await handlePuzzleCommand(event, bot, script);
+                //     break;
+            case EVENT_TYPE.LINEAR_SEQUENCE:
+                await handleLinearSequence(event, bot, script);
+                break;
+            default:
+                return;
+        }
+    } catch (e) {
+        logger.error(`Error handling event: ${event}`, e);
     }
 };
 

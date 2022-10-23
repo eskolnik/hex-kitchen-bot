@@ -2,7 +2,7 @@ const Room = require("../models/room.js");
 const Puzzle = require("../models/puzzle.js");
 const { npcConfig } = require("../fakeDB/npcConfig");
 const { getWebhookForChannel } = require("../webhooks/webhook");
-const { logger } = require("../utils/logger");
+const { logger } = require("./logger");
 
 // events can be of several types, this util handles them all
 const EVENT_TYPES = {

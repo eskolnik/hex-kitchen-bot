@@ -6,7 +6,7 @@
 const { Collection } = require("discord.js");
 const { getGameByGuildId, addGame, addEvent } = require("../db/cache");
 const { parseScript } = require("../engine/parseScript");
-const { ScriptEventFactory, ScriptEvent } = require("./ScriptEvent");
+const { ScriptEventFactory, ScriptEvent, EVENT_TYPE } = require("./ScriptEvent");
 
 class GameScript {
     constructor({
@@ -100,8 +100,36 @@ class GameScript {
         const eventsMap = new Collection();
         const eventFactory = new ScriptEventFactory(guildId);
 
+        // Some event keys coming from the script tool will have old or non-descriptive keys
+        // Modify the incoming json data to map the script tool keys to the correct keys
+        const replaceKeys = (object, keyMap) => {
+            keyMap.forEach(([oldKey, newKey]) => {
+                // if the data object has the old key and not the new, overwrite and remove old key
+                if(object[oldKey] && !object[newKey]) {
+                    object[newKey] = object[oldKey];
+                    delete object[oldKey];
+                }
+            });
+            return object;
+        };
+        const normalizeEventData = (jsonEvent) => { 
+            switch(jsonEvent.type) {
+                case EVENT_TYPE.EMOJI_INPUT:
+                case EVENT_TYPE.EMOJI_REACT:
+                    // if (jsonEvent.content && !jsonEvent.emoji){
+                    //     let {content, ...modifiedEvent} = jsonEvent;
+                    //     modifiedEvent.emoji = content;
+                    //     return modifiedEvent;
+                    // }
+                    // return jsonEvent;
+                    return replaceKeys(jsonEvent, [["content", "emoji"], ["targetEvent", "targetEventId"]]);
+            }
+            return jsonEvent;
+        };
+
         Object.values(events).forEach((eventData) => {
-            const event = eventFactory.fromJson(eventData);
+            const normalizedEventData = normalizeEventData(eventData);
+            const event = eventFactory.fromJson(normalizedEventData);
             eventsMap.set(event.id, event);
         });
 

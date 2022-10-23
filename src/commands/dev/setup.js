@@ -5,6 +5,7 @@ const { initiateScript } = require("../../engine/initiateScript");
 const fetch = require("node-fetch");
 const GameScript = require("../../models/GameScript");
 const { handleEvent } = require("../../engine/handleEvent");
+const { logger } = require("../../utils/logger");
 
 module.exports = {
     help: {
@@ -38,12 +39,15 @@ module.exports = {
             scriptJSON,
             message.guild
         );
-
-        handleEvent(
-            gameScript.events[gameScript.initialEvent],
-            bot,
-            gameScript
-        );
+        try {
+            handleEvent(
+                gameScript.events.get(gameScript.initialEvent),
+                bot,
+                gameScript
+            );
+        } catch (e) {
+            console.log("Error executing initial event");
+        }
 
         await reply.react("❌");
 
@@ -71,12 +75,13 @@ module.exports = {
                 gameScript.categoryChannels
             );
 
-            for (let i = channels.length - 1; i >= 0; i--) {
-                if (channels[i].channelId) {
+            const deleteChannel = async (channelId) => {
+                if (channelId) {
                     try {
                         const channelForDeletion = await bot.channels.fetch(
-                            channels[i].channelId
+                            channelId
                         );
+                        logger.info(`Deleting channel ${channelForDeletion}`);
 
                         if (channelForDeletion.type === "text") {
                             await deleteChannelHooks(channelForDeletion);
@@ -86,13 +91,20 @@ module.exports = {
                         console.log(error);
                     }
                 }
-            }
+            };
+                
+            logger.info("Cleaning up channels: ", channels);
+            channels.forEach(channel => {
+                if(channel.channelId) {
+                    deleteChannel(channel.channelId);
+                }
+            });
             try {
                 await message.delete();
                 await reply.delete();
                 collector.stop();
             } catch (error) {
-                console.error("Failed to remove reactions.");
+                logger.error("Failed to remove reactions.");
             }
         });
     },

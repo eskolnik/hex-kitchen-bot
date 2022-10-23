@@ -2,7 +2,7 @@
     "name": "HexKitchenBot",
     "version": "1.0.0",
     "description": "",
-    "main": "index.js",
+    "main": "main.js",
     "scripts": {
         "start": "NODE_ENV=development node ./src/main.js",
         "start-prod": "NODE_ENV=production node ./src/main.js",

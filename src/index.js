@@ -1,3 +1,4 @@
+// TODO pretty sure this entire file is deprecated, spot check and remove
 require("dotenv").config({
     path: `./.env.${
         process.env.NODE_ENV?.match(/development|production|staging/) || "default"
@@ -50,13 +51,14 @@ bot.on("ready", () => {
                 "LT"
             )}] The bot is now online! Currently logging on ${
                 bot.guilds.cache.size
-            } servers!`
+            } servers!
+            Servers: ${bot.guilds.cache.toJSON}`
         )
     ); // once the bot is ready, it'll log, in green, that the bot is online and will display the number of servers it's in.
 });
 
-bot.on("error", console.error); // if theres an error, console log it
-bot.on("warn", console.warn); // if theres a warning, log it
+bot.on("error", logger.error); // if theres an error, console log it
+bot.on("warn", logger.warn); // if theres a warning, log it
 
 bot.on("message", (message) => {
     if (message.author.bot) return; // if there is no guild or the message author is a bot, ignore
@@ -65,7 +67,7 @@ bot.on("message", (message) => {
     // some standard argument definitions
     const args = message.content.slice(prefix.length).trim().split(/ +/g);
     const cmd = args.shift().toLowerCase();
-
+    logger.info("COMMAND ", cmd);
     // now we try getting the command. if it doesn't exist, return
     try {
         const command =

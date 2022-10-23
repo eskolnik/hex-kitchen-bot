@@ -30,7 +30,7 @@ class ScriptEvent {
             throw new Error("Undefined Event Type");
         }
 
-        this.id = id;
+        this.id = id.toString();
         this.type = type;
         this.currentStatus = currentStatus;
         this.guildId = guildId;
@@ -93,8 +93,7 @@ class EmojiReactEvent extends ScriptEvent {
     }) {
         super({ type: EVENT_TYPE.EMOJI_REACT, id, currentStatus, guildId });
         this.emoji = emoji;
-        this.targetEventId = targetEventId;
-    }
+        this.targetEventId = targetEventId;    }
 }
 
 /**
@@ -138,12 +137,16 @@ class CommandInputEvent extends ScriptEvent {
         guildId,
         command,
         solution,
+        channel,
+        eventsTriggered,
         currentStatus = EVENT_STATUS.UNAVAILABLE,
     }) {
         super({ type: EVENT_TYPE.COMMAND_INPUT, id, guildId, currentStatus });
 
         this.command = command;
         this.solution = solution;
+        this.channel = channel;
+        this.eventsTriggered = eventsTriggered;
     }
 }
 
@@ -152,12 +155,13 @@ class CommandInputEvent extends ScriptEvent {
  *
  */
 class EmojiInputEvent extends ScriptEvent {
-    constructor({ id, guildId, emoji, targetEventId, eventsTriggered }) {
+    constructor({ id, guildId, emoji, targetEventId, eventsTriggered, options }) {
         super({ type: EVENT_TYPE.EMOJI_INPUT, id, guildId });
 
         this.emoji = emoji;
         this.targetEventId = targetEventId;
         this.eventsTriggered = eventsTriggered;
+        this.options = options;
     }
 }
 

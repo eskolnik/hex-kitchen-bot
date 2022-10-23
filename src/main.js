@@ -46,17 +46,18 @@ const main = () => {
     });
 
     // Handle errors and warnings
-    bot.on("error", console.error); // if theres an error, console log it
-    bot.on("warn", console.warn); // if theres a warning, log it
+    bot.on("error", logger.error); // if theres an error,  log it
+    bot.on("warn", logger.warn); // if theres a warning, log it
 
     bot.on("ready", () => {
-        console.log(
+        logger.info(
             chalk.green(
                 `[${moment().format(
                     "LT"
                 )}] The bot is now online! Currently logging on ${
                     bot.guilds.cache.size
-                } servers!`
+                } servers!
+Servers: ${bot.guilds.cache.map(e => e.name).join(", ")}`
             )
         ); // once the bot is ready, it'll log, in green, that the bot is online and will display the number of servers it's in.
     });
@@ -118,7 +119,7 @@ const emojiReactionHandler = async (bot, messageReaction, user) => {
  * @param {*} button
  */
 const buttonClickHandler = (bot, button) => {
-    console.log("button clicked", button.id);
+    logger.info("button clicked");
 };
 
 main();
