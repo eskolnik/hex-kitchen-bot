@@ -48,9 +48,9 @@ const handleCommand = (bot, message) => {
 
     let availableCommands = getAvailableCommandsForGuild(guildId);
 
-    if (process.env.NODE_ENV === "development") {
-        availableCommands = [...availableCommands, ...DEV_COMMANDS];
-    }
+    // if (process.env.NODE_ENV === "development") {
+    availableCommands = [...availableCommands, ...DEV_COMMANDS];
+    // }
 
     const command = matchCommand(cmd, availableCommands);
 

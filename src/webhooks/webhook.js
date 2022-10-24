@@ -1,3 +1,5 @@
+const { logger } = require("../utils/logger");
+
 // given a channel, return a webhook for that channel
 const getWebhookForChannel = async (channel) => {
     let hooks = await channel.fetchWebhooks();
@@ -8,7 +10,7 @@ const getWebhookForChannel = async (channel) => {
                 ? hooks[0]
                 : await channel.createWebhook(channel.name);
     } catch (err) {
-        console.log(err);
+        logger.error(err);
     }
 
     return hook;

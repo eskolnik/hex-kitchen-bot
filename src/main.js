@@ -5,6 +5,7 @@ require("dotenv").config({
     }`,
 });
 
+
 const { Client, Collection, Message } = require("discord.js"); // discord api wrapper, only requiring the Client and Collection class
 const chalk = require("chalk"); // chalk is a module that adds color to our console logs
 const moment = require("moment"); // moment will allow us to format specific dates and times later
@@ -19,11 +20,12 @@ const { EVENT_TYPE } = require("./models/ScriptEvent");
  * Sets up bot listener
  */
 const main = () => {
+
     // Instantiate bot
     const bot = new Client();
 
     // set up discord button extension
-    discordButtons(bot);
+    // discordButtons(bot);
 
     // Message handler
     bot.on("message", (message) => messageHandler(bot, message));
@@ -41,7 +43,7 @@ const main = () => {
         let channel = guild.systemChannel || guild.channels.cache.first;
 
         channel.send(
-            "Welcome to the Hex Kitchen server!. Use `!setup <version>` to initiate a script."
+            "Welcome to the EscapeRoom experience. Use `!setup <version>` to initiate a script."
         );
     });
 
@@ -56,8 +58,7 @@ const main = () => {
                     "LT"
                 )}] The bot is now online! Currently logging on ${
                     bot.guilds.cache.size
-                } servers!
-Servers: ${bot.guilds.cache.map(e => e.name).join(", ")}`
+                } servers!}`
             )
         ); // once the bot is ready, it'll log, in green, that the bot is online and will display the number of servers it's in.
     });

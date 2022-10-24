@@ -93,7 +93,8 @@ class EmojiReactEvent extends ScriptEvent {
     }) {
         super({ type: EVENT_TYPE.EMOJI_REACT, id, currentStatus, guildId });
         this.emoji = emoji;
-        this.targetEventId = targetEventId;    }
+        this.targetEventId = targetEventId.toString();    
+    }
 }
 
 /**
@@ -159,7 +160,7 @@ class EmojiInputEvent extends ScriptEvent {
         super({ type: EVENT_TYPE.EMOJI_INPUT, id, guildId });
 
         this.emoji = emoji;
-        this.targetEventId = targetEventId;
+        this.targetEventId = targetEventId.toString();
         this.eventsTriggered = eventsTriggered;
         this.options = options;
     }

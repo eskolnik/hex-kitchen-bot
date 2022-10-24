@@ -24,7 +24,7 @@ module.exports = {
                 process.env.SCRIPT_TOOL_URL + "?version=" + version;
             data = await fetch(scriptURL);
         } catch (error) {
-            console.log("Unable to fetch script. ", error);
+            logger.error("Unable to fetch script. ", error);
             return;
         }
 
@@ -46,7 +46,7 @@ module.exports = {
                 gameScript
             );
         } catch (e) {
-            console.log("Error executing initial event");
+            logger.error("Error executing initial event");
         }
 
         await reply.react("❌");
@@ -59,14 +59,14 @@ module.exports = {
             try {
                 const hooks = await channel
                     .fetchWebhooks()
-                    .catch(console.error);
+                    .catch(logger.error);
 
-                console.log("deleting " + hooks.size + " hooks");
+                logger.info("Deleting " + hooks.size + " hooks");
                 for (let [id, hook] of hooks) {
                     await hook.delete();
                 }
             } catch (error) {
-                console.log("failed to delete hooks", error);
+                logger.log("Failed to delete hooks", error);
             }
         };
 
@@ -88,7 +88,7 @@ module.exports = {
                         }
                         await channelForDeletion.delete();
                     } catch (error) {
-                        console.log(error);
+                        logger.error("Error deleting channel: ", error);
                     }
                 }
             };
