@@ -2,14 +2,17 @@
 
 ## Setup
   1. Run `npm install`
-  2. Create an `env.default` file and add the line `DISCORD_TOKEN=<your_discord_app_token>` (Create an application and get your token at https://discordapp.com/developers/applications/)
+  2. Create an `.env.development` file and add the line `DISCORD_TOKEN=<your_discord_app_token>` (Create an application and get your token at https://discordapp.com/developers/applications/)
   3. Open up `config.js` and change `prefix: "!"` to whatever your desired command prefix is.
   
 ## Running the server
-`npm start`
-OR
-`npm start-prod` to listen on the production server
+`yarn start`
 
+## Deploying
+`fly deploy`
+
+## Status checks
+`fly status`
 
 # Roadmap
 https://docs.google.com/document/d/16K7SH8hZS9uq354kulsQ0QPyd3jEkE7j45ooeByJbnw
