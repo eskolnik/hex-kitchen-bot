@@ -1,7 +1,7 @@
 # Hex Kitchen Discord Bot
 
 ## Setup
-  1. Run `npm install`
+  1. Run `yarn install`
   2. Create an `.env.development` file and add the line `DISCORD_TOKEN=<your_discord_app_token>` (Create an application and get your token at https://discordapp.com/developers/applications/)
   3. Open up `config.js` and change `prefix: "!"` to whatever your desired command prefix is.
   
